@@ -82,7 +82,6 @@
     "lint": "eslint --cache ."
   },
   "files": [
-    "build/",
     "dist/mini-tokyo-3d.*",
     "dist/assets",
     "src/"
