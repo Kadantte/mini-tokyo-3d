@@ -35,7 +35,8 @@
     "dev:watch": "rollup -c rollup.config.dev.mjs -w",
     "docs": "vuepress build docs --no-cache",
     "docs:dev": "vuepress dev docs --no-cache",
-    "lint": "eslint --cache . && sort-package-json --check"
+    "lint": "eslint --cache . && sort-package-json --check",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@deck.gl/core": "^8.9.36",
