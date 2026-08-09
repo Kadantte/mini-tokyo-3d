@@ -166,7 +166,17 @@ export default class {
         [scene.fog.near, scene.fog.far] = getFogNearFar(cameraToSeaLevelDistance, farZ);
 
         renderer.resetState();
-        renderer.render(scene, camera);
+
+        // When the implementation provides its own render(), delegate the final
+        // draw to it so it can render to offscreen targets and run post-processing
+        // (e.g. bloom) before compositing onto the map. The camera, fog and lights
+        // are already configured above. Falls back to the default scene render.
+        const implementation = me.implementation;
+        if (implementation.render) {
+            implementation.render(me.map, {renderer, scene, camera});
+        } else {
+            renderer.render(scene, camera);
+        }
     }
 
     // Applies the given directional and ambient light (from the map's 'light' event
