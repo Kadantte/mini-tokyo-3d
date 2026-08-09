@@ -111,14 +111,17 @@ export default class extends Evented {
 
     _setVisibility(visible) {
         const me = this,
-            style = me._element.style;
+            style = me._element.style,
+            containerStyle = me._marker.getElement().style;
 
         if (visible) {
             style.opacity = 1;
             style.pointerEvents = 'auto';
+            containerStyle.pointerEvents = 'auto';
         } else {
             style.opacity = 0;
             style.pointerEvents = 'none';
+            containerStyle.pointerEvents = 'none';
             if (me._hover) {
                 me._onMouseLeave();
             }
