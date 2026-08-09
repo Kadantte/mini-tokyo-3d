@@ -1,3 +1,4 @@
+import configs from './configs';
 import {bindAll} from './helpers/helpers';
 import {Evented, Marker} from 'mapbox-gl';
 
@@ -13,12 +14,17 @@ export default class extends Evented {
             element = document.createElement('div'),
             child = options.element;
 
-        child.style.transition = 'opacity 300ms';
+        // The marker starts hidden; addTo() fades it in and remove() fades it out.
+        child.style.transition = `opacity ${configs.transitionDuration}ms`;
+        child.style.opacity = 0;
+        child.style.pointerEvents = 'none';
+        element.style.pointerEvents = 'none';
 
         me._element = element.appendChild(child);
         me._marker = new Marker({element});
         me._minZoom = options.minZoom || 0;
-        me._visible = true;
+        me._visible = false;
+        me._added = false;
         bindAll(['_onClick', '_onMouseEnter', '_onMouseLeave', '_onZoom'], me);
     }
 
@@ -31,16 +37,26 @@ export default class extends Evented {
         const me = this,
             element = me._element;
 
-        me._map = map;
-        me._zoom = map.getZoom();
+        // Cancel a pending fade-out removal, if the marker is re-added mid-fade.
+        if (me._removeTimer) {
+            clearTimeout(me._removeTimer);
+            delete me._removeTimer;
+        }
+        if (!me._added) {
+            me._added = true;
+            me._map = map;
+            me._zoom = map.getZoom();
+            me._marker.addTo(map.map);
+            map.on('zoom', me._onZoom);
+            element.addEventListener('click', me._onClick);
+            element.addEventListener('mouseenter', me._onMouseEnter);
+            element.addEventListener('mouseleave', me._onMouseLeave);
+            element.addEventListener('mousemove', me._onMouseMove);
+            // Commit the hidden start state so the fade-in transition runs.
+            element.getBoundingClientRect();
+        }
+        me._visible = true;
         me._setVisibility(me._zoom >= me._minZoom);
-
-        me._marker.addTo(map.map);
-        map.on('zoom', me._onZoom);
-        element.addEventListener('click', me._onClick);
-        element.addEventListener('mouseenter', me._onMouseEnter);
-        element.addEventListener('mouseleave', me._onMouseLeave);
-        element.addEventListener('mousemove', me._onMouseMove);
         return me;
     }
 
@@ -49,15 +65,29 @@ export default class extends Evented {
      * @returns {Marker} Returns itself to allow for method chaining
      */
     remove() {
-        const me = this,
-            element = me._element;
+        const me = this;
 
-        element.removeEventListener('click', me._onClick);
-        element.removeEventListener('mouseenter', me._onMouseEnter);
-        element.removeEventListener('mouseleave', me._onMouseLeave);
-        element.removeEventListener('mousemove', me._onMouseMove);
-        me._map.off('zoom', me._onZoom);
-        me._marker.remove();
+        if (!me._added) {
+            return me;
+        }
+        // Fade out, then detach after the transition completes.
+        me._visible = false;
+        me._setVisibility(false);
+        if (me._removeTimer) {
+            clearTimeout(me._removeTimer);
+        }
+        me._removeTimer = setTimeout(() => {
+            const element = me._element;
+
+            element.removeEventListener('click', me._onClick);
+            element.removeEventListener('mouseenter', me._onMouseEnter);
+            element.removeEventListener('mouseleave', me._onMouseLeave);
+            element.removeEventListener('mousemove', me._onMouseMove);
+            me._map.off('zoom', me._onZoom);
+            me._marker.remove();
+            me._added = false;
+            delete me._removeTimer;
+        }, configs.transitionDuration);
         return me;
     }
 
