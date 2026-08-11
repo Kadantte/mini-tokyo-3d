@@ -34,6 +34,7 @@ export default [{
         name: 'mt3d',
         file: `dev/${pkg.name}.js`,
         format: 'umd',
+        exports: 'named',
         indent: false,
         sourcemap: true
     },

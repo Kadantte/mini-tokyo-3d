@@ -57,6 +57,7 @@ export default [{
     output: {
         file: `dist/${pkg.name}.cjs`,
         format: 'cjs',
+        exports: 'named',
         indent: false,
         sourcemap: true,
         banner
@@ -87,6 +88,7 @@ export default [{
         name: 'mt3d',
         file: `dist/${pkg.name}.min.js`,
         format: 'umd',
+        exports: 'named',
         indent: false,
         sourcemap: true,
         banner
@@ -122,7 +124,7 @@ export default [{
     ],
     onwarn
 }, {
-    input: 'src/index.esm.js',
+    input: 'src/index.js',
     output: {
         file: pkg.module,
         format: 'esm',
