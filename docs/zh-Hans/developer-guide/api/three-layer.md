@@ -4,7 +4,7 @@
 
 自定义 three.js 图层包含一个 [three.js](https://threejs.org/docs/) 场景。开发者可以使用地图相机，直接在地图的 GL 上下文中渲染 three.js 对象。可以使用 [Map#addLayer](./map.md#addlayer-layer) 将这些图层添加到地图。
 
-自定义 three.js 图层必须具有唯一的 `id`，且 `type` 必须为 `'three'`。图层可以实现 `onAdd` 和 `onRemove`。
+自定义 three.js 图层必须具有唯一的 `id`，且 `type` 必须为 `'three'`。图层可以实现 `onAdd`、`onRemove`、`prerender` 和 `render`。
 
 ## 属性
 
@@ -55,6 +55,42 @@
 #### 参数
 
 **`map`** ([`Map`](./map.md)) 刚刚移除此图层的 Mini Tokyo 3D Map。
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) 此图层包含的 three.js 渲染器、场景和相机。
+
+名称 | 说明
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | 相机对象。
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | 渲染器对象。
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | 场景对象。
+
+---
+
+### **`prerender(map, context)`**
+
+在每个渲染帧中、绘制场景之前调用的可选方法。图层可以借此更新对象、uniform 或动画，或渲染到最终绘制将使用的离屏目标。图层不得假定任何特定的 GL 状态，且在渲染之前必须绑定帧缓冲。
+
+#### 参数
+
+**`map`** ([`Map`](./map.md)) 此图层所属的 Mini Tokyo 3D Map。
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) 此图层包含的 three.js 渲染器、场景和相机。
+
+名称 | 说明
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | 相机对象。
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | 渲染器对象。
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | 场景对象。
+
+---
+
+### **`render(map, context)`**
+
+在每个渲染帧中绘制图层时调用的可选方法。实现后，该方法负责最终绘制，可以渲染到离屏目标并执行后处理（例如泛光），然后再合成到地图上。相机、光源和雾均已配置完毕。未实现时，将使用默认渲染器绘制图层的场景。
+
+#### 参数
+
+**`map`** ([`Map`](./map.md)) 此图层所属的 Mini Tokyo 3D Map。
 
 **`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) 此图层包含的 three.js 渲染器、场景和相机。
 

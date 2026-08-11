@@ -4,7 +4,7 @@ Interface for custom three.js layers. This is a specification for implementers t
 
 A custom three.js layer contains a [three.js](https://threejs.org/docs/) scene. It allows a developer to render three.js objects directly into the map's GL context using the map's camera. These layers can be added to the map using [Map#addLayer](./map.md#addlayer-layer).
 
-Custom three.js layers must have a unique `id` and must have the `type` of `'three'`. They may implement `onAdd` and `onRemove`.
+Custom three.js layers must have a unique `id` and must have the `type` of `'three'`. They may implement `onAdd`, `onRemove`, `prerender` and `render`.
 
 ## Properties
 
@@ -55,6 +55,42 @@ Optional method called when the layer has been removed from the Map with [Map#re
 #### Parameters
 
 **`map`** ([`Map`](./map.md)) The Mini Tokyo 3D Map this layer was just removed from.
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) three.js renderer, scene and camera this layer contains.
+
+Name | Description
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Camera object.
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Renderer object.
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Scene object.
+
+---
+
+### **`prerender(map, context)`**
+
+Optional method called during each render frame before the scene is drawn. This gives the layer a chance to update objects, uniforms or animations, or to render into offscreen targets that the final render will use. The layer must not assume any particular GL state and must bind a framebuffer before rendering to it.
+
+#### Parameters
+
+**`map`** ([`Map`](./map.md)) The Mini Tokyo 3D Map this layer belongs to.
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) three.js renderer, scene and camera this layer contains.
+
+Name | Description
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Camera object.
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Renderer object.
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Scene object.
+
+---
+
+### **`render(map, context)`**
+
+Optional method called during each render frame to draw the layer. When implemented, it is responsible for the final draw and may render to offscreen targets and run post-processing (such as bloom) before compositing the result onto the map. The camera, lights and fog are already configured. If not implemented, the layer's scene is rendered with the default renderer.
+
+#### Parameters
+
+**`map`** ([`Map`](./map.md)) The Mini Tokyo 3D Map this layer belongs to.
 
 **`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) three.js renderer, scene and camera this layer contains.
 

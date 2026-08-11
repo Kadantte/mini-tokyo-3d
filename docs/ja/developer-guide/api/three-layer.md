@@ -4,7 +4,7 @@
 
 カスタム three.js レイヤーには、[three.js](https://threejs.org/docs/) のシーンが含まれています。開発者は、マップのカメラを使って、three.js オブジェクトをマップの GL コンテキストに直接レンダリングすることができます。このレイヤーは [Map#addLayer](./map.md#addlayer-layer) を使ってマップに追加できます。
 
-カスタムの three.js レイヤーは、一意の `id` を持ち、`type` が `'three'` である必要があります。また、`onAdd`と`onRemove` を実装することができます。
+カスタムの three.js レイヤーは、一意の `id` を持ち、`type` が `'three'` である必要があります。また、`onAdd`、`onRemove`、`prerender`、`render` を実装することができます。
 
 ## プロパティ
 
@@ -55,6 +55,42 @@
 #### パラメータ
 
 **`map`** ([`Map`](./map.md)) このレイヤーが削除された Mini Tokyo 3D の Map
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) このレイヤーに含まれる three.js のレンダラー、シーン、カメラオブジェクト
+
+名前 | 説明
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Camera オブジェクト
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Renderer オブジェクト
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Scene オブジェクト
+
+---
+
+### **`prerender(map, context)`**
+
+各描画フレームでシーンが描画される前に呼び出される、任意実装のメソッドです。これを利用して、レイヤーはオブジェクトやユニフォーム、アニメーションを更新したり、最終的な描画で使用するオフスクリーンターゲットへ描画したりすることができます。レイヤーは特定の GL の状態を仮定してはならず、描画する前にフレームバッファをバインドする必要があります。
+
+#### パラメータ
+
+**`map`** ([`Map`](./map.md)) このレイヤーが属する Mini Tokyo 3D の Map
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) このレイヤーに含まれる three.js のレンダラー、シーン、カメラオブジェクト
+
+名前 | 説明
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Camera オブジェクト
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Renderer オブジェクト
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Scene オブジェクト
+
+---
+
+### **`render(map, context)`**
+
+各描画フレームでレイヤーを描画するために呼び出される、任意実装のメソッドです。実装した場合、このメソッドが最終的な描画を担当し、オフスクリーンターゲットへの描画やポストプロセス（ブルームなど）を行ってからマップに合成することができます。カメラ、ライト、フォグはすでに設定済みです。実装しない場合は、デフォルトのレンダラーでレイヤーのシーンが描画されます。
+
+#### パラメータ
+
+**`map`** ([`Map`](./map.md)) このレイヤーが属する Mini Tokyo 3D の Map
 
 **`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) このレイヤーに含まれる three.js のレンダラー、シーン、カメラオブジェクト
 

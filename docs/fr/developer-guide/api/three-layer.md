@@ -4,7 +4,7 @@ Interface pour les couches three.js personnalisées. Il s'agit d'une spécificat
 
 Une couche three.js personnalisée contient une scène [three.js](https://threejs.org/docs/). Il permet à un développeur de restituer les objets three.js directement dans le contexte GL de la carte à l'aide de la caméra de la carte. Ces couches peuvent être ajoutées à la carte en utilisant [Map#addLayer](./map.md#addlayer-layer).
 
-Les couches three.js personnalisées doivent avoir un `id` unique et doivent avoir le `type` de `'three'`. Elles peuvent implémenter `onAdd` et `onRemove`.
+Les couches three.js personnalisées doivent avoir un `id` unique et doivent avoir le `type` de `'three'`. Elles peuvent implémenter `onAdd`, `onRemove`, `prerender` et `render`.
 
 ## Propriétés
 
@@ -55,6 +55,42 @@ Méthode facultative appelée lorsque la couche a été supprimée de la carte a
 #### Paramètres
 
 **`map`** ([`Map`](./map.md)) La carte 3D Mini Tokyo de laquelle cette couche vient d'être supprimée.
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) L'objet contenant le moteur de rendu three.js, la scène et la caméra.
+
+Nom | Description
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Objet caméra.
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Objet de rendu.
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Objet de scène.
+
+---
+
+### **`prerender(map, context)`**
+
+Méthode facultative appelée à chaque image de rendu avant que la scène ne soit dessinée. Cela donne à la couche la possibilité de mettre à jour les objets, les uniformes ou les animations, ou de dessiner dans des cibles hors écran que le rendu final utilisera. La couche ne doit faire aucune supposition sur l'état GL courant et doit lier un framebuffer avant d'y dessiner.
+
+#### Paramètres
+
+**`map`** ([`Map`](./map.md)) La carte 3D Mini Tokyo à laquelle appartient cette couche.
+
+**`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) L'objet contenant le moteur de rendu three.js, la scène et la caméra.
+
+Nom | Description
+:-- | :--
+**`context.camera`**<br>[`PerspectiveCamera`](https://threejs.org/docs/#api/en/cameras/PerspectiveCamera) | Objet caméra.
+**`context.renderer`**<br>[`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) | Objet de rendu.
+**`context.scene`**<br>[`Scene`](https://threejs.org/docs/#api/en/scenes/Scene) | Objet de scène.
+
+---
+
+### **`render(map, context)`**
+
+Méthode facultative appelée à chaque image de rendu pour dessiner la couche. Lorsqu'elle est implémentée, elle est responsable du rendu final et peut dessiner dans des cibles hors écran et exécuter un post-traitement (tel que le bloom) avant de composer le résultat sur la carte. La caméra, les lumières et le brouillard sont déjà configurés. Si elle n'est pas implémentée, la scène de la couche est rendue avec le moteur de rendu par défaut.
+
+#### Paramètres
+
+**`map`** ([`Map`](./map.md)) La carte 3D Mini Tokyo à laquelle appartient cette couche.
 
 **`context`** ([`Object`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)) L'objet contenant le moteur de rendu three.js, la scène et la caméra.
 
