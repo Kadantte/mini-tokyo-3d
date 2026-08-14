@@ -9,7 +9,16 @@ function getElementPosition(el) {
 }
 
 function getElement(to) {
-    const targetAnchor = to.hash.slice(1);
+    // Decode the hash so percent-encoded anchors (e.g. inline [text](#foo) links
+    // to non-ASCII headings, which markdown-it encodes) match the heading's raw
+    // slug id. The "#" header anchors are already raw, so decoding is a no-op.
+    let targetAnchor = to.hash.slice(1);
+
+    try {
+        targetAnchor = decodeURIComponent(targetAnchor);
+    } catch (error) {
+        // Keep the raw anchor if it is not valid percent-encoding
+    }
     return document.getElementById(targetAnchor) || document.querySelector(`[name='${targetAnchor}']`);
 }
 
@@ -74,4 +83,39 @@ export default ({
             });
         }
     };
+
+    // Route in-page hash links (the heading "#" anchors and plain [text](#foo)
+    // links) through vue-router instead of letting the browser navigate them
+    // natively. A native hash click does not update the router's route, so
+    // @vuepress/plugin-active-header-links sees a stale route.hash and, on the
+    // next scroll, replaces the URL back to the heading at the current position
+    // (the "hash reverts and does not scroll" issue seen in Chrome). Going
+    // through the router keeps route.hash in sync and reuses scrollBehavior.
+    if (typeof window !== 'undefined') {
+        window.addEventListener('click', event => {
+            if (event.defaultPrevented || event.button !== 0 ||
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            const link = event.target.closest && event.target.closest('a[href]');
+
+            if (!link || (link.target && link.target !== '_self')) {
+                return;
+            }
+
+            const hash = link.getAttribute('href');
+
+            if (!hash || hash.charAt(0) !== '#' || hash.length < 2) {
+                return;
+            }
+
+            event.preventDefault();
+            if (router.currentRoute.hash === hash) {
+                scrollToAnchor({hash});
+            } else {
+                router.push({hash}).catch(() => { /* ignore duplicated navigation */ });
+            }
+        });
+    }
 };
