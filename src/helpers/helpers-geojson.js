@@ -1,6 +1,6 @@
-import turfBearing from '@turf/bearing';
-import centerOfMass from '@turf/center-of-mass';
-import turfDistance from '@turf/distance';
+import {bearing as turfBearing} from '@turf/bearing';
+import {centerOfMass} from '@turf/center-of-mass';
+import {distance as turfDistance} from '@turf/distance';
 import {featureCollection} from '@turf/helpers';
 import {getCoord, getCoords} from '@turf/invariant';
 import {featureEach} from '@turf/meta';

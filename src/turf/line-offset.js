@@ -1,16 +1,16 @@
-import bearing from '@turf/bearing';
-import buffer from '@turf/buffer';
-import cleanCoords from '@turf/clean-coords';
-import distance from '@turf/distance';
+import {bearing} from '@turf/bearing';
+import {buffer} from '@turf/buffer';
+import {cleanCoords} from '@turf/clean-coords';
+import {distance} from '@turf/distance';
 import {lineString} from '@turf/helpers';
 import {getCoords} from '@turf/invariant';
-import nearestPointOnLine from '@turf/nearest-point-on-line';
-import polygonToLine from '@turf/polygon-to-line';
+import {nearestPointOnLine} from '@turf/nearest-point-on-line';
+import {polygonToLine} from '@turf/polygon-to-line';
 import destination from './destination';
 
 function nearestIndex(lines, coords, pt) {
     const p = nearestPointOnLine(lines, pt),
-        index = p.properties.index,
+        index = p.properties.segmentIndex,
         c1 = coords[index],
         c2 = coords[index + 1] || c1;
 
@@ -26,12 +26,9 @@ export default function(geojson, distance) {
         end = coords[coordsLen - 1],
         endBearing = bearing(coords[coordsLen - 2], end),
         bearingOffset = distance > 0 ? 90 : -90,
-
-        // Converting meters to Mercator meters
-        dist = Math.abs(distance / Math.cos((start[1] + end[1]) * Math.PI / 360)),
-
+        dist = Math.abs(distance),
         polygonLine = polygonToLine(
-            buffer(geojson, dist, {step: coordsLen * 2 + 64})
+            buffer(geojson, dist, {steps: 64})
         );
 
     // If MultiLineString is generated, pick the first LineString
@@ -45,7 +42,7 @@ export default function(geojson, distance) {
         index1 = nearestIndex(polygonLine, polygonLineCoords, destination(start, dist, startBearing + bearingOffset)),
         index2 = nearestIndex(polygonLine, polygonLineCoords, destination(end, dist, endBearing + bearingOffset)),
         tempCoords = [],
-        step = distance > 0 ? -1 : 1;
+        step = distance > 0 ? 1 : -1;
 
     for (let i = 0; i < length; i++) {
         const index = (index1 + i * step + length) % length;

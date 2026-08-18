@@ -1,6 +1,6 @@
-import bearing from '@turf/bearing';
-import destination from '@turf/destination';
-import distance from '@turf/distance';
+import {bearing} from '@turf/bearing';
+import {destination} from '@turf/destination';
+import {distance} from '@turf/distance';
 import {lineString} from '@turf/helpers';
 
 // Better version of turf.lineSliceAlong
@@ -79,5 +79,7 @@ export default function(line, startDist, stopDist, options) {
     if (travelled < startDist && coords.length === origCoordsLength) {
         throw new Error('Start position is beyond line');
     }
-    return lineString(coords[coords.length - 1]);
+
+    const last = coords[coords.length - 1];
+    return lineString([last, last]);
 }

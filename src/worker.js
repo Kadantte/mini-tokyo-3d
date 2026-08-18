@@ -1,6 +1,6 @@
-import buffer from '@turf/buffer';
+import {buffer} from '@turf/buffer';
 import {featureCollection, lineString, point} from '@turf/helpers';
-import union from '@turf/union';
+import {union} from './turf';
 import * as Comlink from 'comlink';
 import {DecodeUTF8, Unzip, UnzipInflate} from 'fflate';
 import * as geobuf from 'geobuf';
@@ -9,6 +9,9 @@ import configs from './configs';
 import {includes, mergeMaps, normalizeLang} from './helpers/helpers';
 import {updateDistances} from './helpers/helpers-geojson';
 import {encode} from './helpers/helpers-gtfs';
+
+// Bus stop group size at zoom 14 in kilometers
+const BUS_STOP_SIZE = .02;       // 20m
 
 function csvToArray(text) {
     const result = [''];
@@ -472,10 +475,10 @@ function getFeatureCollection(shapes, stops, translations) {
     }
 
     for (const zoom of [14, 15, 16, 17, 18]) {
-        const unit = Math.pow(2, 14 - zoom) * .1;
+        const unit = Math.pow(2, 14 - zoom);
 
         for (const item of stopGroups.values()) {
-            const feature = union(...item.map(coord => buffer(point(coord), unit / 4)));
+            const feature = union(...item.map(coord => buffer(point(coord), unit * BUS_STOP_SIZE)));
 
             feature.properties = {
                 type: 1,

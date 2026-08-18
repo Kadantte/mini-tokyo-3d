@@ -1,17 +1,22 @@
 import {Worker, workerData, parentPort} from 'worker_threads';
-import along from '@turf/along';
-import buffer from '@turf/buffer';
-import turfDistance from '@turf/distance';
+import {along} from '@turf/along';
+import {buffer} from '@turf/buffer';
+import {distance as turfDistance} from '@turf/distance';
 import {featureCollection, lineString, point} from '@turf/helpers';
 import {getCoord, getCoords} from '@turf/invariant';
-import turfLength from '@turf/length';
+import {length as turfLength} from '@turf/length';
 import {coordEach} from '@turf/meta';
-import nearestPointOnLine from '@turf/nearest-point-on-line';
-import truncate from '@turf/truncate';
-import union from '@turf/union';
-import {destination, lineOffset, lineSlice, lineSliceAlong, nearestPointProps} from '../turf';
+import {nearestPointOnLine} from '@turf/nearest-point-on-line';
+import {truncate} from '@turf/truncate';
+import {destination, lineOffset, lineSlice, lineSliceAlong, nearestPointProps, union} from '../turf';
 import {includes, valueOrDefault} from '../helpers/helpers';
 import {loadJSON, saveJSON} from './helpers';
+
+// Feature sizes at zoom 14 in kilometers
+const STATION_SIZE = .08,        // 80m
+    CONNECTION_SIZE = .02,       // 20m
+    TRACK_SPACING = .1,          // 100m between parallel tracks
+    ALTITUDE_SCALE = 100;        // vertical exaggeration factor
 
 function setAltitude(geojson, altitude) {
     coordEach(geojson, coord => {
@@ -37,11 +42,11 @@ function getLocationAlongLine(line, point, options) {
             partialLine = options.first ? firstHalf : secondHalf,
             nearestPoint = nearestPointOnLine(partialLine, point);
 
-        return startLocation + nearestPoint.properties.location;
+        return startLocation + nearestPoint.properties.totalDistance;
     } else {
         const nearestPoint = nearestPointOnLine(line, point);
 
-        return nearestPoint.properties.location;
+        return nearestPoint.properties.totalDistance;
     }
 }
 
@@ -162,7 +167,7 @@ export function featureWorker() {
     const featureLookup = {};
     const featureArray = [];
 
-    const unit = Math.pow(2, 14 - zoom) * .1;
+    const unit = Math.pow(2, 14 - zoom);
 
     for (const {id, sublines, color, altitude, loop} of railways) {
         const railwayFeature = lineString([].concat(...sublines.map((subline, index) => {
@@ -178,7 +183,7 @@ export function featureWorker() {
                     step = !reverse ? 1 : -1,
                     feature = featureLookup[nextSubline.railway],
                     nearest = nearestPointProps(feature, coordinates[start]),
-                    baseOffset = nextSubline.offset * unit - nearest.distance,
+                    baseOffset = nextSubline.offset * unit * TRACK_SPACING - nearest.distance,
                     baseFeature = lineString(coordinates),
                     baseLocation = getLocationAlongLine(baseFeature, coordinates[start]),
                     transition = Math.min(Math.abs(nextSubline.offset) * .75 + .75, turfLength(baseFeature)),
@@ -204,7 +209,7 @@ export function featureWorker() {
                     step = !reverse ? 1 : -1,
                     baseFeature = lineString(coordinates),
                     baseLocation = getLocationAlongLine(baseFeature, coordinates[start]),
-                    baseAltitudeMeter = baseAltitude * unit * 1000;
+                    baseAltitudeMeter = baseAltitude * unit * ALTITUDE_SCALE;
 
                 for (let i = start; i !== end; i += step) {
                     const distance = Math.abs(getLocationAlongLine(baseFeature, coordinates[i]) - baseLocation);
@@ -228,19 +233,19 @@ export function featureWorker() {
                     const feature = lineSlice(coords[0], coords[coords.length - 1], featureLookup[start.railway]),
                         offset = start.offset;
 
-                    coordinates = alignDirection(offset ? lineOffset(feature, offset * unit) : feature, coords);
+                    coordinates = alignDirection(offset ? lineOffset(feature, offset * unit * TRACK_SPACING) : feature, coords);
                 } else {
                     const {interpolate} = subline;
                     let feature1 = lineSlice(coords[0], coords[coords.length - 1], featureLookup[start.railway]),
                         offset = start.offset;
                     if (offset) {
-                        feature1 = lineOffset(feature1, offset * unit);
+                        feature1 = lineOffset(feature1, offset * unit * TRACK_SPACING);
                     }
                     alignDirection(feature1, coords);
                     let feature2 = lineSlice(coords[0], coords[coords.length - 1], featureLookup[end.railway]);
                     offset = end.offset;
                     if (offset) {
-                        feature2 = lineOffset(feature2, offset * unit);
+                        feature2 = lineOffset(feature2, offset * unit * TRACK_SPACING);
                     }
                     alignDirection(feature2, coords);
                     const length1 = turfLength(feature1),
@@ -263,7 +268,7 @@ export function featureWorker() {
                 end && end.altitude !== undefined ? .4 : 0);
             if (sublineAltitude) {
                 for (const coord of coordinates) {
-                    coord[2] = sublineAltitude * unit * 1000;
+                    coord[2] = sublineAltitude * unit * ALTITUDE_SCALE;
                 }
             }
             if (start && start.altitude !== undefined) {
@@ -339,7 +344,7 @@ export function featureWorker() {
                     });
                 }
                 if (section.altitude === undefined && i < coords.length - 1) {
-                    section.altitude = coords[i + 1][2] < 0 ? -unit * 1000 : 0;
+                    section.altitude = coords[i + 1][2] < 0 ? -unit * ALTITUDE_SCALE : 0;
                 }
                 if (section.opacity === undefined && i < coords.length - 1) {
                     section.opacity = coords[i + 1][3] !== undefined ? coords[i + 1][3] : 1;
@@ -384,7 +389,7 @@ export function featureWorker() {
                 }),
                 feature = coords.length === 1 ? point(coords[0]) : lineString(coords);
 
-            layer.features.push(buffer(feature, unit));
+            layer.features.push(buffer(feature, unit * STATION_SIZE));
             layer.connectionCoords.push(...coords);
             layer.altitude = altitude;
         }
@@ -392,12 +397,12 @@ export function featureWorker() {
         if (ug.features.length) {
             // If there are connections, add extra features
             if (ug.connectionCoords.length > 1) {
-                ug.features.push(buffer(lineString(ug.connectionCoords), unit / 4));
+                ug.features.push(buffer(lineString(ug.connectionCoords), unit * CONNECTION_SIZE));
             }
 
             const feature = union(...ug.features);
 
-            setAltitude(feature, ug.altitude * unit * 1000);
+            setAltitude(feature, ug.altitude * unit * ALTITUDE_SCALE);
             feature.properties = {
                 id: `${ug.id}.ug.${zoom}`,
                 type: 1,
@@ -406,7 +411,7 @@ export function featureWorker() {
                 color: '#FFFFFF',
                 zoom,
                 group: `${ids[0]}.ug`,
-                altitude: ug.altitude * unit * 1000,
+                altitude: ug.altitude * unit * ALTITUDE_SCALE,
                 ids
             };
             featureArray.push(feature);
@@ -414,7 +419,7 @@ export function featureWorker() {
         if (og.features.length) {
             // If there are connections, add extra features
             if (og.connectionCoords.length > 1) {
-                og.features.push(buffer(lineString(og.connectionCoords), unit / 4));
+                og.features.push(buffer(lineString(og.connectionCoords), unit * CONNECTION_SIZE));
             }
 
             const feature = union(...og.features);

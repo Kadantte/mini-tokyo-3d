@@ -1645,7 +1645,7 @@ export default class extends Evented {
 
                     const offsets = trip.stops.map(stopId =>
                         // Use the previous offset to calulate a weight and pick a closer point
-                        (offset = nearestCloserPointOnLine(feature, gtfs.stops.get(stopId).coord, offset).properties.location)
+                        (offset = nearestCloserPointOnLine(feature, gtfs.stops.get(stopId).coord, offset).properties.totalDistance)
                     );
 
                     me.busStart(new Bus({
@@ -2881,7 +2881,7 @@ export default class extends Evented {
                         let offset = 0;
                         const offsets = trip.stops.map(stopId =>
                             // Use the previous offset to calulate a weight and pick a closer point
-                            (offset = nearestCloserPointOnLine(feature, stops.get(stopId).coord, offset).properties.location)
+                            (offset = nearestCloserPointOnLine(feature, stops.get(stopId).coord, offset).properties.totalDistance)
                         );
 
                         bus = new Bus({
@@ -2898,7 +2898,7 @@ export default class extends Evented {
                     } else {
                         const offsets = bus.offsets,
                             // Use the current bus.offset to calulate a weight and pick a closer point
-                            offset = bus.offset = nearestCloserPointOnLine(feature, [position.longitude, position.latitude], bus.offset).properties.location;
+                            offset = bus.offset = nearestCloserPointOnLine(feature, [position.longitude, position.latitude], bus.offset).properties.totalDistance;
 
                         bus.stop = trip.stopSequences[offsets.reduce(
                             (acc, cur, i) => cur < offset ? Math.min(i + 1, offsets.length - 1) : acc, 0
