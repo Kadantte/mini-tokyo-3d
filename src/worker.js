@@ -642,11 +642,18 @@ function loadGtfs(source, now, lang) {
                                 const lines = data.split(/\r?\n/);
 
                                 if (lines.length > 1) {
-                                    gtfsReader.read(stringBuffer + lines[0]);
+                                    const line = stringBuffer + lines[0];
+
+                                    // Skip blank lines, which are not valid GTFS records
+                                    if (line) {
+                                        gtfsReader.read(line);
+                                    }
                                     stringBuffer = '';
                                 }
                                 for (let i = 1; i < lines.length - 1; i++) {
-                                    gtfsReader.read(lines[i]);
+                                    if (lines[i]) {
+                                        gtfsReader.read(lines[i]);
+                                    }
                                 }
                                 stringBuffer += lines[lines.length - 1];
                                 if (final) {
