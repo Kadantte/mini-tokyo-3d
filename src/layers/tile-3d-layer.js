@@ -2,7 +2,7 @@ import {Tile3DLayer} from '@deck.gl/geo-layers';
 import {MapboxLayer} from '@deck.gl/mapbox';
 import {setLights} from '../helpers/helpers-deck';
 import {getAmbientLight, getDirectionalLight, getFogColor, getFogNearFar} from '../helpers/helpers-mapbox';
-import FogExtension from './fog-extension';
+import FogExtension from './extensions/fog-extension';
 
 const DEGREE_TO_RADIAN = Math.PI / 180;
 
