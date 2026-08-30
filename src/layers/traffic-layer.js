@@ -71,8 +71,9 @@ export default class {
         ogPickingScene.add(aircraftMeshSet.getPickingMesh());
         ogPickingScene.add(busMeshSet.getPickingMesh());
 
-        me.pickingTexture = new WebGLRenderTarget(1, 1);
-        me.pixelBuffer = new Uint8Array(4);
+        // pickObjects() renders ground/underground into their own half each.
+        me.pickingTexture = new WebGLRenderTarget(2, 1);
+        me.pixelBuffer = new Uint8Array(8);
 
         me.animationID = animation.start({
             callback: () => {
@@ -270,13 +271,15 @@ export default class {
         return Promise.resolve();
     }
 
-    pickObject(mode, point) {
+    // setScissor(+Test) is required alongside setViewport: a scene's
+    // background clear ignores the viewport and would otherwise wipe the
+    // other half too.
+    pickObjects(point) {
         const me = this,
             {pickingTexture, pixelBuffer} = me,
             {renderer, camera} = me.context,
             rendererContext = renderer.getContext(),
-            pixelRatio = window.devicePixelRatio,
-            scene = mode === 'underground' ? me.ugPickingScene : me.ogPickingScene;
+            pixelRatio = window.devicePixelRatio;
 
         camera.setViewOffset(
             rendererContext.drawingBufferWidth,
@@ -289,15 +292,28 @@ export default class {
 
         renderer.resetState();
         renderer.setRenderTarget(pickingTexture);
-        renderer.render(scene, camera);
+        renderer.setScissorTest(true);
+
+        renderer.setViewport(0, 0, 1, 1);
+        renderer.setScissor(0, 0, 1, 1);
+        renderer.render(me.ogPickingScene, camera);
+
+        renderer.setViewport(1, 0, 1, 1);
+        renderer.setScissor(1, 0, 1, 1);
+        renderer.render(me.ugPickingScene, camera);
+
+        renderer.setScissorTest(false);
         renderer.setRenderTarget(null);
         renderer.resetState();
 
         camera.clearViewOffset();
 
-        renderer.readRenderTargetPixels(pickingTexture, 0, 0, 1, 1, pixelBuffer);
+        renderer.readRenderTargetPixels(pickingTexture, 0, 0, 2, 1, pixelBuffer);
 
-        return me.objects.get((pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | pixelBuffer[2]);
+        return {
+            ground: me.objects.get((pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | pixelBuffer[2]),
+            underground: me.objects.get((pixelBuffer[4] << 16) | (pixelBuffer[5] << 8) | pixelBuffer[6])
+        };
     }
 
     refreshDelayMarkers(actual) {

@@ -3091,14 +3091,15 @@ export default class extends Evented {
     pickObject(point) {
         const me = this,
             {map, layerZoom} = me,
-            modes = ['ground', 'underground'];
+            modes = ['ground', 'underground'],
+            vehicles = me.trafficLayer.pickObjects(point);
         let object;
 
         if (me.viewMode === 'underground') {
             modes.reverse();
         }
         for (const mode of modes) {
-            object = me.trafficLayer.pickObject(mode, point);
+            object = vehicles[mode];
             if (object) {
                 return object;
             }
