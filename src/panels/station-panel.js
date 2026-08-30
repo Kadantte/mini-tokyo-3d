@@ -637,28 +637,28 @@ export default class extends Panel {
         }
 
         for (const zoom of [13, 14, 15, 16, 17, 18]) {
-            mbox.getLayer(`railways-routeug-${zoom}`).setProps({
+            setLayerProps(mbox, `railways-routeug-${zoom}`, {
                 data: featureFilter(featureCollection, p =>
                     p.zoom === zoom && p.altitude < 0 && includes(railwaySections, p.section)
                 ),
                 visible: true
             });
 
-            mbox.getLayer(`stations-routeug-${zoom}`).setProps({
+            setLayerProps(mbox, `stations-routeug-${zoom}`, {
                 data: featureFilter(featureCollection, p =>
                     p.zoom === zoom && p.altitude < 0 && includes(stationGroups, p.group)
                 ),
                 visible: true
             });
 
-            mbox.getLayer(`railways-routeog-${zoom}`).setProps({
+            setLayerProps(mbox, `railways-routeog-${zoom}`, {
                 data: featureFilter(featureCollection, p =>
                     p.zoom === zoom && p.altitude === 0 && includes(railwaySections, p.section)
                 ),
                 visible: true
             });
 
-            mbox.getLayer(`stations-routeog-${zoom}`).setProps({
+            setLayerProps(mbox, `stations-routeog-${zoom}`, {
                 data: featureFilter(featureCollection, p =>
                     p.zoom === zoom && p.altitude === 0 && includes(stationGroups, p.group)
                 ),

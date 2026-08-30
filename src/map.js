@@ -12,7 +12,7 @@ import * as helpers from './helpers/helpers';
 import {pickObject, resetCursor} from './helpers/helpers-deck';
 import * as helpersGeojson from './helpers/helpers-geojson';
 import * as helpersMapbox from './helpers/helpers-mapbox';
-import {GeoJsonLayer, ThreeLayer, Tile3DLayer, TrafficLayer} from './layers';
+import {GeoJsonLayer, ThreeLayer, Tile3DLayer, TrafficLayer, ZoomWidthScaleExtension} from './layers';
 import {isExpired, loadBusData, loadDictionary, loadDynamicBusData, loadDynamicFlightData, loadDynamicTrainData, loadStaticData, loadTimetableData, updateOdptUrl} from './loader';
 import {AboutPanel, BusPanel, LayerPanel, SharePanel, StationPanel, TrackingModePanel, TrainPanel} from './panels';
 import Plugin from './plugin';
@@ -25,6 +25,12 @@ const RAILWAY_NAMBOKU = 'TokyoMetro.Namboku',
 const AIRLINES_FOR_ANA_CODE_SHARE = ['ADO', 'SFJ', 'SNJ'];
 
 const DEGREE_TO_RADIAN = Math.PI / 180;
+
+// Matches the native 'stations-outline'/'railways-og-*' style layers' own
+// interpolate expression: constant screen-space stroke width within the
+// normal [12, 19] zoom range, shrinking below zoom 12 and growing above
+// zoom 19 - see ZoomWidthScaleExtension.
+const STROKE_WIDTH_SCALE_STOPS = [9, 0.125, 12, 1, 19, 1, 22, 8];
 
 // Replace NavigationControl._updateZoomButtons to support disabling the control
 const _updateZoomButtons = NavigationControl.prototype._updateZoomButtons;
@@ -789,9 +795,7 @@ export default class extends Evented {
             const commonProps = {
                 type: 'geojson',
                 lineWidthUnits: 'pixels',
-                lineWidthScale:
-                    zoom === 13 ? helpers.clamp(Math.pow(2, initialZoom - 12), .125, 1) :
-                    zoom === 18 ? helpers.clamp(Math.pow(2, initialZoom - 19), 1, 8) : 1,
+                extensions: [new ZoomWidthScaleExtension(STROKE_WIDTH_SCALE_STOPS)],
                 parameters: {depthTest: false},
                 minzoom: zoom <= 13 ? 0 : zoom,
                 maxzoom: zoom >= 18 ? 24 : zoom + 1
@@ -1122,20 +1126,6 @@ export default class extends Evented {
             const zoom = map.getZoom(),
                 prevLayerZoom = me.layerZoom,
                 layerZoom = me.layerZoom = getLayerZoom(zoom);
-
-            if (zoom < 13) {
-                const lineWidthScale = helpers.clamp(Math.pow(2, zoom - 12), .125, 1);
-
-                for (const id of ['stations-marked-13', 'stations-selected-13', 'railways-ug-13', 'stations-ug-13', 'railways-routeug-13', 'stations-routeug-13', 'railways-routeog-13', 'stations-routeog-13']) {
-                    helpersMapbox.setLayerProps(map, id, {lineWidthScale});
-                }
-            } else if (zoom > 19) {
-                const lineWidthScale = helpers.clamp(Math.pow(2, zoom - 19), 1, 8);
-
-                for (const id of ['stations-marked-18', 'stations-selected-18', 'railways-ug-18', 'stations-ug-18', 'railways-routeug-18', 'stations-routeug-18', 'railways-routeog-18', 'stations-routeog-18']) {
-                    helpersMapbox.setLayerProps(map, id, {lineWidthScale});
-                }
-            }
 
             // Deprecated
             // me.objectUnit = Math.max(getObjectScale(zoom) * .19, .02);
