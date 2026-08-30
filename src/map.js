@@ -872,15 +872,19 @@ export default class extends Evented {
             data: helpersGeojson.featureFilter(featureCollection, p => p.altitude === 0)
         });
 
-        for (const zoom of [13, 14, 15, 16, 17, 18]) {
-            const interpolate = ['interpolate', ['exponential', 2], ['zoom']],
-                width = ['get', 'width'],
-                color = ['get', 'color'],
-                lineWidth =
-                    zoom === 13 ? [...interpolate, 9, ['/', width, 8], 12, width] :
-                    zoom === 18 ? [...interpolate, 19, width, 22, ['*', width, 8]] :
-                    width;
+        // width has to be baked into each stop rather than factored out via
+        // ['*', width, interpolate(...)]: mapbox only allows ["zoom"] as the
+        // top-level input of a paint property's own interpolate/step.
+        const width = ['get', 'width'],
+            color = ['get', 'color'],
+            lineWidth = ['interpolate', ['exponential', 2], ['zoom'],
+                9, ['/', width, 8],
+                12, width,
+                19, width,
+                22, ['*', width, 8]
+            ];
 
+        for (const zoom of [13, 14, 15, 16, 17, 18]) {
             for (const key of ['railways', 'stations', 'stations-outline']) {
                 map.addLayer({
                     id: `${key}-og-${zoom}`,
