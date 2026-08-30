@@ -109,7 +109,7 @@ export default [{
             minimize: true
         }),
         commonjs(),
-        ...patches({nodeEnv: 'production', workerFile}),
+        ...patches({nodeEnv: 'production', workerFile, stripDebugLogging: true}),
         image(),
         glsl(),
         terser({
