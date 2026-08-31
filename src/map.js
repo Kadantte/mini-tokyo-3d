@@ -9,7 +9,7 @@ import Dataset from './dataset';
 import {Airport, Bus, Flight, FlightStatus, GTFSRoute, GTFSStop, GTFSTrip, Operator, POI, RailDirection, Railway, Station, Train, TrainTimetables, TrainType, TrainVehicleType} from './data-classes';
 import extend from './extend';
 import * as helpers from './helpers/helpers';
-import {pickObject, resetCursor} from './helpers/helpers-deck';
+import {disableAutoHover, pickObject, resetCursor} from './helpers/helpers-deck';
 import * as helpersGeojson from './helpers/helpers-geojson';
 import * as helpersMapbox from './helpers/helpers-mapbox';
 import {GeoJsonLayer, ThreeLayer, Tile3DLayer, TrafficLayer, ZoomWidthScaleExtension} from './layers';
@@ -866,6 +866,21 @@ export default class extends Evented {
         }
 
         resetCursor(map.__deck);
+
+        // deck.eventManager doesn't exist until the GL context callback fires
+        // (asynchronously, after this point), so defer until then.
+        if (map.__deck.isInitialized) {
+            disableAutoHover(map.__deck);
+        } else {
+            const onRender = () => {
+                if (map.__deck.isInitialized) {
+                    map.off('render', onRender);
+                    disableAutoHover(map.__deck);
+                }
+            };
+
+            map.on('render', onRender);
+        }
 
         map.addSource('odpt', {
             type: 'geojson',

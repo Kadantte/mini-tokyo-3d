@@ -42,3 +42,16 @@ export function setLights(deck, ambient, directional) {
 export function resetCursor(deck) {
     deck.setProps({getCursor: () => deck.getCanvas().style.cursor});
 }
+
+/**
+ * Stops deck.gl's own automatic hover picking. Deck's EventManager runs a
+ * full synchronous GPU pick on every pointermove/pointerleave to drive
+ * onHover/getCursor - both unused here (picking is done explicitly via
+ * pickObject() above, and the cursor via resetCursor()) - so left alone it
+ * costs real frame time for no purpose.
+ * @param {Deck} deck - deck.gl's Deck instance
+ */
+export function disableAutoHover(deck) {
+    deck.eventManager.off('pointermove', deck._onPointerMove);
+    deck.eventManager.off('pointerleave', deck._onPointerMove);
+}
