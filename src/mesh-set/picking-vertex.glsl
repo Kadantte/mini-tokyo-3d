@@ -72,6 +72,6 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );
     // Must match the body mesh's bias (project-vertex.glsl) so picking
     // agrees with what's actually visible.
-    gl_Position.z -= float( instanceID % 4093 ) * 1e-6 * gl_Position.w;
+    gl_Position.z -= float( instanceID % 256 ) * 2e-7 * gl_Position.w;
     vIdColor = idColor;
 }

@@ -75,6 +75,6 @@ void main() {
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );
     // See project-vertex.glsl (used by the body mesh) for the rationale.
-    gl_Position.z -= float( instanceID % 4093 ) * 1e-6 * gl_Position.w;
+    gl_Position.z -= float( instanceID % 256 ) * 2e-7 * gl_Position.w;
     vInstanceOpacity = outline;
 }
