@@ -12,8 +12,6 @@ vec3 position0 = ( position + vec3( 0.0, offsetY, offsetZ ) ) * vec3( scaleX, sc
 vec3 position0 = position * scale0;
 #endif
 
-position0 = position0 * ( 1.0 + float( instanceID % 256 ) / 256.0 * 0.03 );
-
 #ifdef BUS
 vec3 transformed = rotateZ( rotationZ ) * position0 + translation + vec3( 0.0, 0.0, 0.3 * scale0 );
 #else

@@ -65,7 +65,6 @@ void main() {
     vec3 position0 = position * scale0;
     #endif
 
-    position0 = position0 * ( 1.0 + float( instanceID % 256 ) / 256.0 * 0.03 );
     position0 = position0 + 0.1 * scale0 * sign( position );
 
     #ifdef BUS
@@ -75,5 +74,7 @@ void main() {
     #endif
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );
+    // See project-vertex.glsl (used by the body mesh) for the rationale.
+    gl_Position.z -= float( instanceID % 4093 ) * 1e-6 * gl_Position.w;
     vInstanceOpacity = outline;
 }

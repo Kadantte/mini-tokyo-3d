@@ -63,8 +63,6 @@ void main() {
     vec3 position0 = position * scale0;
     #endif
 
-    position0 = position0 * ( 1.0 + float( instanceID % 256 ) / 256.0 * 0.03 );
-
     #ifdef BUS
     vec3 transformed = rotateZ( rotationZ ) * position0 + translation + vec3( 0.0, 0.0, 0.3 * scale0 );
     #else
@@ -72,5 +70,8 @@ void main() {
     #endif
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );
+    // Must match the body mesh's bias (project-vertex.glsl) so picking
+    // agrees with what's actually visible.
+    gl_Position.z -= float( instanceID % 4093 ) * 1e-6 * gl_Position.w;
     vIdColor = idColor;
 }

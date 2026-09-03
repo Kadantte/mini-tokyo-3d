@@ -7,6 +7,7 @@ import commonVertexShaderChunk from './common-vertex.glsl';
 import colorVertexShaderChunk from './color-vertex.glsl';
 import beginnormalVertexShaderChunk from './beginnormal-vertex.glsl';
 import beginVertexShaderChunk from './begin-vertex.glsl';
+import projectVertexShaderChunk from './project-vertex.glsl';
 import commonFragmentShaderChunk from './common-fragment.glsl';
 import diffuseColorFragmentShaderChunk from './diffuse-color-fragment.glsl';
 import outlineFragmentShader from './outline-fragment.glsl';
@@ -48,7 +49,8 @@ export default class {
                 .replace('#include <common>', commonVertexShaderChunk)
                 .replace('#include <color_vertex>', colorVertexShaderChunk)
                 .replace('#include <beginnormal_vertex>', beginnormalVertexShaderChunk)
-                .replace('#include <begin_vertex>', beginVertexShaderChunk);
+                .replace('#include <begin_vertex>', beginVertexShaderChunk)
+                .replace('#include <project_vertex>', projectVertexShaderChunk);
             shader.fragmentShader = shader.fragmentShader
                 .replace('#include <common>', commonFragmentShaderChunk)
                 .replace('vec4 diffuseColor = vec4( diffuse, opacity );', diffuseColorFragmentShaderChunk);
